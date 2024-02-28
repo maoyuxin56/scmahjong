@@ -146,6 +146,7 @@ a.gradient-button:focus span:nth-of-type(2) {
 }
 
 .arrowemoji {
+  font-size: 1rem;
   margin-left: 10px;
   margin-right: 10px;
   padding-bottom: 70px;
@@ -161,6 +162,11 @@ img.choices {
   border-radius: 5px;
   cursor: pointer;
   opacity: 0.6;
+}
+
+img.answers {
+  width: 25px;
+  border-radius: 3px;
 }
 
 img.selected {

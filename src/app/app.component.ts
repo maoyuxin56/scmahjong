@@ -3,7 +3,10 @@ import { RouterOutlet } from "@angular/router";
 import { Tile, tileSuites } from "./tile";
 import { CommonModule, NgFor } from "@angular/common";
 import { Hand } from "./hand";
-import { fadeInOnEnterAnimation, fadeOutOnLeaveAnimation } from 'angular-animations';
+import {
+  fadeInOnEnterAnimation,
+  fadeOutOnLeaveAnimation,
+} from "angular-animations";
 
 const NUMS = [1, 2, 3, 4, 5, 6, 7, 8, 9];
 const SUITS = ["b", "t", "w"];
@@ -178,7 +181,7 @@ function checkIfIsValidSet(tiles: Tile[]): boolean {
     if (map.has(tile.asset!)) {
       map.set(tile.asset!, map.get(tile.asset!)! + 1);
       if (map.get(tile.asset!)! > 4) {
-        console.log("invalid set!", tiles);
+        // console.log("invalid set!", tiles);
         return false;
       }
     } else {
@@ -263,10 +266,10 @@ function segregateWinSet(tiles: Tile[]): Tile[][] {
     if (allProperMelds.length === 0) {
       // console.log("no proper melds when eyes are ", tiles[_eyes[0]]);
     } else {
-      console.log("proper melds when eye is ", tiles[_eyes[0]]);
-      console.log(allProperMelds);
+      // console.log("proper melds when eye is ", tiles[_eyes[0]]);
+      // console.log(allProperMelds);
       _melds = allProperMelds[0];
-      _melds.push([tiles[_eyes[0]],tiles[_eyes[1]]])
+      _melds.push([tiles[_eyes[0]], tiles[_eyes[1]]]);
     }
   }
 
@@ -304,7 +307,7 @@ function tryGroupIntoProperMelds(tiles: Tile[]): Tile[][][] {
     }
     if (_proper_melds.length === 4) {
       result.push(_proper_melds);
-      console.log("proper melds found: ", _proper_melds);
+      // console.log("proper melds found: ", _proper_melds);
       break; // just need one
     } else {
       // console.log('not a proper melds combination')
@@ -370,8 +373,8 @@ function getTileAsset(tile: Tile): String {
   return "assets/" + String(tile.num) + SUITS[tile.suit] + ".png";
 }
 
-function findPossibleWinTiles(tiles: Tile[]): Map<String,Tile[][]> {
-  let possibles: Map<String,Tile[][]> = new Map();
+function findPossibleWinTiles(tiles: Tile[]): Map<String, Tile[][]> {
+  let possibles: Map<String, Tile[][]> = new Map();
   let _suits = new Set();
   for (let tile of tiles) {
     _suits.add(tile.suit);
@@ -396,10 +399,10 @@ function findPossibleWinTiles(tiles: Tile[]): Map<String,Tile[][]> {
       const _t = _check_tiles[i];
       let _try_tiles: Tile[] = JSON.parse(JSON.stringify(tiles));
       _try_tiles.push(_t);
-      console.log("trying ", _t);
+      // console.log("trying ", _t);
       const res = segregateWinSet(_try_tiles);
       if (res.length > 0) {
-        console.log(res);
+        // console.log(res);
         possibles.set(_t.asset!, res);
       }
     }
@@ -439,53 +442,74 @@ export class AppComponent {
     Array.from(this.mapPossibleWinnings().values())
   );
 
-  protected readonly suitTiles = signal([BINGTILES,TIAOTILES,WANTILES]);
+  protected readonly suitTiles = signal([BINGTILES, TIAOTILES, WANTILES]);
   protected readonly selectedTiles = signal(new Set());
   protected readonly gameState = signal(0); // 0-playing,1-won
+  protected readonly messages = signal({
+    "MahJong Practice": "MahJong Practice",
+    "Hand tiles": "Hand tiles",
+    "Please choose winning tile": "Please choose winning tile",
+  });
 
   title = "scmahjong";
 
   constructor() {
     this.resetGame();
+    const lang = navigator.language;
+    console.log(lang)
+    if (lang.includes("zh")) {
+      // manually doing i18n
+      this.messages.set({
+        "MahJong Practice": "下叫练习",
+        "Hand tiles": "手牌",
+        "Please choose winning tile": "选择胡牌",
+      });
+    }
   }
 
   resetGame() {
     this.tilesWinningHand.set(getWinHand());
-    this.tilesRemovedOne.set(sortTiles(removeRandomTile(this.tilesWinningHand())))
-    this.mapPossibleWinnings.set(findPossibleWinTiles(this.tilesRemovedOne()))
-    this.assetsPossibleWinnings.set(Array.from(this.mapPossibleWinnings().keys()))
-    this.groupedHandPossibleWinnings.set(Array.from(this.mapPossibleWinnings().values()))
+    this.tilesRemovedOne.set(
+      sortTiles(removeRandomTile(this.tilesWinningHand()))
+    );
+    this.mapPossibleWinnings.set(findPossibleWinTiles(this.tilesRemovedOne()));
+    this.assetsPossibleWinnings.set(
+      Array.from(this.mapPossibleWinnings().keys())
+    );
+    this.groupedHandPossibleWinnings.set(
+      Array.from(this.mapPossibleWinnings().values())
+    );
     this.selectedTiles.set(new Set());
-    this.gameState.set(0)
+    this.gameState.set(0);
   }
 
-  onClickTile(e: any,t: Tile): any {
+  onClickTile(e: any, t: Tile): any {
     if (this.gameState() === 1) {
       return;
     }
-    let ele:HTMLElement = e.target;
+    let ele: HTMLElement = e.target;
     if (!this.assetsPossibleWinnings().includes(t.asset!)) {
       if (!ele.className.includes("shake")) {
-        const old = ele.className
-        ele.className = ele.className + " shake"
-        setTimeout(()=>{ele.className = old},300)
+        const old = ele.className;
+        ele.className = ele.className + " shake";
+        setTimeout(() => {
+          ele.className = old;
+        }, 300);
       }
       return;
     }
-    console.log(t)
+    // console.log(t)
     this.selectedTiles.update((v) => {
       if (v.has(t.asset)) {
-        v.delete(t.asset)
+        v.delete(t.asset);
       } else {
-        v.add(t.asset)
+        v.add(t.asset);
       }
       return v;
     });
     if (this.selectedTiles().size === this.assetsPossibleWinnings().length) {
-      this.gameState.set(1)
+      this.gameState.set(1);
     }
     // console.log(this.selectedTiles());
   }
-
-
 }

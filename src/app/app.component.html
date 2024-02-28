@@ -1,5 +1,5 @@
 <div class="col">
-  <h1 i18n>MahJong Practice</h1>
+  <h1 i18n>{{messages()["MahJong Practice"]}}</h1>
   <div *ngIf="isDev() === true">
     <h3>Generated Winning Set</h3>
     <div>
@@ -11,7 +11,7 @@
       />
     </div>
   </div>
-  <h3 i18n>Hand tiles</h3>
+  <h3 i18n>{{messages()["Hand tiles"]}}</h3>  
   <div>
     <img
       *ngFor="let tile of tilesRemovedOne()"
@@ -32,16 +32,16 @@
     </div>
   </div>
 
-  <div *ngIf="gameState() === 1">
+  <div *ngIf="gameState() === 1 || isDev() === true">
     <div *ngFor="let key of mapPossibleWinnings().keys()">
-      <img class="tile choices" [src]="key" [attr.alt]="key" />
-      <span class="arrowemoji">➡️</span>
+      <img class="tile answers selected" [src]="key" [attr.alt]="key" />
+      <span class="arrowemoji"> ➡️ </span>
       <span
         class="tilegroup"
         *ngFor="let group of mapPossibleWinnings().get(key)"
       >
         <img
-          class="tile"
+          class="tile answers"
           *ngFor="let tile of group"
           [src]="tile.asset"
           [attr.alt]="tile.asset"
@@ -50,7 +50,7 @@
     </div>
   </div>
 
-  <h3 i18n>Please choose winning tile</h3>
+  <h3 i18n>{{messages()["Please choose winning tile"]}}</h3>
   <div>
     <div *ngFor="let tiles of suitTiles()">
       <img
@@ -65,7 +65,7 @@
     </div>
   </div>
 
-  <button style="margin-top: 20px;" [disabled]="gameState() === 0" (click)="resetGame()">
+  <button style="margin-top: 20px; font-size: 2rem;" [disabled]="gameState() === 0" (click)="resetGame()">
     <span style="size: 5rem;">🔄</span>
   </button>
 </div>
