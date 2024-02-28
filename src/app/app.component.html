@@ -1,0 +1,71 @@
+<div class="col">
+  <h1 i18n>MahJong Practice</h1>
+  <div *ngIf="isDev() === true">
+    <h3>Generated Winning Set</h3>
+    <div>
+      <img
+        *ngFor="let tile of tilesWinningHand()"
+        class="tile"
+        [src]="tile.asset"
+        [attr.alt]="tile.num"
+      />
+    </div>
+  </div>
+  <h3 i18n>Hand tiles</h3>
+  <div>
+    <img
+      *ngFor="let tile of tilesRemovedOne()"
+      class="tile"
+      [src]="tile.asset"
+      [attr.alt]="tile.num"
+    />
+  </div>
+  <div *ngIf="isDev() === true">
+    <h3>Possible Winnings</h3>
+    <div *ngIf="gameState() === 0">
+      <img
+        class="tile"
+        *ngFor="let kv of mapPossibleWinnings().keys()"
+        [src]="kv"
+        [attr.alt]="kv"
+      />
+    </div>
+  </div>
+
+  <div *ngIf="gameState() === 1">
+    <div *ngFor="let key of mapPossibleWinnings().keys()">
+      <img class="tile choices" [src]="key" [attr.alt]="key" />
+      <span class="arrowemoji">➡️</span>
+      <span
+        class="tilegroup"
+        *ngFor="let group of mapPossibleWinnings().get(key)"
+      >
+        <img
+          class="tile"
+          *ngFor="let tile of group"
+          [src]="tile.asset"
+          [attr.alt]="tile.asset"
+        />
+      </span>
+    </div>
+  </div>
+
+  <h3 i18n>Please choose winning tile</h3>
+  <div>
+    <div *ngFor="let tiles of suitTiles()">
+      <img
+        *ngFor="let tile of tiles"
+        class="tile choices"
+        [src]="tile.asset"
+        [attr.alt]="tile.num"
+        (click)="onClickTile($event, tile)"
+        [ngClass]="{ selected: selectedTiles().has(tile.asset) }"
+      />
+      <br />
+    </div>
+  </div>
+
+  <button style="margin-top: 20px;" [disabled]="gameState() === 0" (click)="resetGame()">
+    <span style="size: 5rem;">🔄</span>
+  </button>
+</div>
