@@ -367,7 +367,7 @@ function buildPossiblePlacements(
 }
 
 function getTileAsset(tile: Tile): String {
-  return "assets/" + String(tile.num) + SUITS[tile.suit] + ".png";
+  return "./assets/" + String(tile.num) + SUITS[tile.suit] + ".png";
 }
 
 function findPossibleWinTiles(tiles: Tile[]): Map<String,Tile[][]> {
