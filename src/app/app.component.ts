@@ -399,11 +399,13 @@ function findPossibleWinTiles(tiles: Tile[]): Map<String, Tile[][]> {
       const _t = _check_tiles[i];
       let _try_tiles: Tile[] = JSON.parse(JSON.stringify(tiles));
       _try_tiles.push(_t);
-      // console.log("trying ", _t);
-      const res = segregateWinSet(_try_tiles);
-      if (res.length > 0) {
-        // console.log(res);
-        possibles.set(_t.asset!, res);
+      if (checkIfIsValidSet(_try_tiles)) {
+        // console.log("trying ", _t);
+        const res = segregateWinSet(_try_tiles);
+        if (res.length > 0) {
+          // console.log(res);
+          possibles.set(_t.asset!, res);
+        }
       }
     }
   }
@@ -456,7 +458,7 @@ export class AppComponent {
   constructor() {
     this.resetGame();
     const lang = navigator.language;
-    console.log(lang)
+    console.log(lang);
     if (lang.includes("zh")) {
       // manually doing i18n
       this.messages.set({
