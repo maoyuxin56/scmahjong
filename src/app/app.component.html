@@ -65,7 +65,7 @@
     </div>
   </div>
 
-  <button style="margin-top: 20px; font-size: 2rem;" [disabled]="gameState() === 0" (click)="resetGame()">
+  <button *ngIf="gameState() === 1" style="margin-top: 20px; font-size: 2rem;" (click)="resetGame()">
     <span style="size: 5rem;">🔄</span>
   </button>
 </div>

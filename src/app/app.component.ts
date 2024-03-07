@@ -21,6 +21,8 @@ const WINS = [
   "qing_7_dui",
   "qing_long_7_dui",
 ];
+const AAA_RATIO = 0.2; // too many AAA melds will make the quiz too easy
+const USE_PREFERRED = 0.9; // 90% of time, use preferred logic to generate melds
 
 function getAllTiles(): Tile[] {
   let tilesSet: Tile[] = [];
@@ -92,14 +94,43 @@ function getDoublet(allowedSuits: Set<number>): Tile[] {
   return getSameTileWithCount(2, allowedSuits);
 }
 
-function getTripletAAA(allowedSuits: Set<number>): Tile[] {
-  return getSameTileWithCount(3, allowedSuits);
+function getTripletAAA(
+  allowedSuits: Set<number>,
+  preferredNumber: number,
+  preferredSuit: number
+): Tile[] {
+  const rand = Math.random();
+  if (rand < USE_PREFERRED) {
+    let tiles: Tile[] = [];
+    for (let i = 0; i < 3; i++) {
+      let _tile: Tile = {
+        num: preferredNumber,
+        suit: preferredSuit,
+      };
+      _tile.asset = getTileAsset(_tile);
+      tiles.push(_tile);
+    }
+    return tiles;
+  } else {
+    return getSameTileWithCount(3, allowedSuits);
+  }
 }
 
-function getTripletABC(allowedSuits: Set<number>): Tile[] {
-  let tiles: Tile[] = [];
+function getTripletABC(
+  allowedSuits: Set<number>,
+  preferredStart: number,
+  preferredSuit: number
+): Tile[] {
   let _num = getRandomNum(6);
-  const _suit = pickRandomFromList(Array.from(allowedSuits));
+  let _suit = pickRandomFromList(Array.from(allowedSuits));
+  
+  const rand = Math.random();
+  if (rand < USE_PREFERRED) {
+    _num = Math.min(7, preferredStart);
+    _suit = preferredSuit;
+  }
+
+  let tiles: Tile[] = [];
   for (let i = 0; i < 3; i++) {
     let _tile: Tile = {
       num: _num + i,
@@ -111,17 +142,6 @@ function getTripletABC(allowedSuits: Set<number>): Tile[] {
   return tiles;
 }
 
-// function getRandomTiles(): Tile[] {
-//   let numSet = getRandomSet(14);
-//   let tileSet = getAllTiles();
-//   let tiles: Tile[] = [];
-//   for (let currNum of numSet) {
-//     tiles.push(tileSet[currNum]);
-//   }
-//   tiles = sortTiles(tiles);
-//   return tiles;
-// }
-
 function getRandomSet(total: number): Set<number> {
   let numSet = new Set<number>();
   while (numSet.size < total) {
@@ -132,15 +152,13 @@ function getRandomSet(total: number): Set<number> {
 
 function sortTiles(tiles: Tile[]): Tile[] {
   tiles.sort(function (a, b) {
-    // return a.suit - b.suit || a.num - b.num;
-    return a.suit - b.suit;
+    return a.suit - b.suit || a.num - b.num;
   });
   return tiles;
 }
 
 function sortTilesByNum(tiles: Tile[]): Tile[] {
   tiles.sort(function (a, b) {
-    // return a.suit - b.suit || a.num - b.num;
     return a.num - b.num;
   });
   return tiles;
@@ -151,10 +169,46 @@ function pickRandomFromList(list: any[]): any {
   return list[random];
 }
 
+function generatePreferredNum(num_of_interest: number): number {
+  let pref_num = 0;
+  const rand = Math.random();
+  switch (num_of_interest) {
+    case 1:
+      if (rand < 0.5){
+        return 1
+      } else {
+        return 2
+      }
+    case 9:
+      if (rand < 0.5) {
+        return 9
+      } else {
+        return 8
+      }
+    default:
+      if (rand < 0.33) {
+        return num_of_interest-1
+      } else if (rand > 0.66) {
+        return num_of_interest
+      } else {
+        return num_of_interest+1
+      }
+  }
+}
+
 function generateTilesFromPatterns(
   patterns: string[],
   allowedSuits: Set<number>
 ): Tile[][] {
+
+  let _num_of_interet = pickRandomFromList(NUMS);
+  let _suit_of_interest = pickRandomFromList(Array.from(allowedSuits));
+  let _toi: Tile = { // tile of interest
+    num: _num_of_interet,
+    suit: _suit_of_interest
+  }
+  _toi.asset = getTileAsset(_toi)
+
   let _tiles: Tile[][] = [];
   for (const _p of patterns) {
     switch (_p) {
@@ -162,10 +216,10 @@ function generateTilesFromPatterns(
         _tiles.push(getDoublet(allowedSuits));
         break;
       case "AAA":
-        _tiles.push(getTripletAAA(allowedSuits));
+        _tiles.push(getTripletAAA(allowedSuits, generatePreferredNum(_toi.num), _toi.suit));
         break;
       case "ABC":
-        _tiles.push(getTripletABC(allowedSuits));
+        _tiles.push(getTripletABC(allowedSuits, generatePreferredNum(_toi.num), _toi.suit));
         break;
       default:
         console.error("unknown pattern");
@@ -191,6 +245,15 @@ function checkIfIsValidSet(tiles: Tile[]): boolean {
   return true;
 }
 
+function generateMeldPatterns(): string {
+  const random = Math.random();
+  if (random < AAA_RATIO) {
+    return "AAA";
+  } else {
+    return "ABC";
+  }
+}
+
 function getWinHand(): Tile[] {
   // simplest win set:
   // AA + 4 * AAA/ABC
@@ -205,7 +268,7 @@ function getWinHand(): Tile[] {
   }
 
   for (let i = 0; i < 4; i++) {
-    _setPattern.push(pickRandomFromList(["AAA", "ABC"]));
+    _setPattern.push(generateMeldPatterns());
   }
 
   // make sure it is a valid set
@@ -429,24 +492,28 @@ function removeRandomTile(tiles: Tile[]): Tile[] {
 })
 export class AppComponent {
   protected readonly isDev = signal(false);
+
+  // round depended values
   protected readonly tilesWinningHand = signal(getWinHand());
   protected readonly tilesRemovedOne = signal(
     sortTiles(removeRandomTile(this.tilesWinningHand()))
   );
   protected readonly mapPossibleWinnings = signal(
+    // TODO: insteand of remove one, remove 3 or 7?
     findPossibleWinTiles(this.tilesRemovedOne())
   );
   protected readonly assetsPossibleWinnings = signal(
     Array.from(this.mapPossibleWinnings().keys())
   );
-
   protected readonly groupedHandPossibleWinnings = signal(
     Array.from(this.mapPossibleWinnings().values())
   );
-
-  protected readonly suitTiles = signal([BINGTILES, TIAOTILES, WANTILES]);
   protected readonly selectedTiles = signal(new Set());
   protected readonly gameState = signal(0); // 0-playing,1-won
+
+  // game depended values
+  protected readonly showInfoModal = signal(true);
+  protected readonly suitTiles = signal([BINGTILES, TIAOTILES, WANTILES]);
   protected readonly messages = signal({
     "MahJong Practice": "MahJong Practice",
     "Hand tiles": "Hand tiles",
@@ -470,18 +537,33 @@ export class AppComponent {
   }
 
   resetGame() {
-    this.tilesWinningHand.set(getWinHand());
-    this.tilesRemovedOne.set(
-      sortTiles(removeRandomTile(this.tilesWinningHand()))
-    );
-    this.mapPossibleWinnings.set(findPossibleWinTiles(this.tilesRemovedOne()));
+    this.mapPossibleWinnings.set(new Map());
+    console.log('here0')
+    while (this.mapPossibleWinnings().size < 2) {
+      // re-roll if quiz is too easy
+      this.tilesWinningHand.set(getWinHand());
+      this.tilesRemovedOne.set(
+        sortTiles(removeRandomTile(this.tilesWinningHand()))
+      );
+      this.mapPossibleWinnings.set(
+        findPossibleWinTiles(this.tilesRemovedOne())
+      );
+    }
+
+    console.log(this.mapPossibleWinnings())
     this.assetsPossibleWinnings.set(
       Array.from(this.mapPossibleWinnings().keys())
     );
+
+    console.log('here2')
     this.groupedHandPossibleWinnings.set(
       Array.from(this.mapPossibleWinnings().values())
     );
+
+    console.log('here3')
     this.selectedTiles.set(new Set());
+
+    console.log('here4')
     this.gameState.set(0);
   }
 
