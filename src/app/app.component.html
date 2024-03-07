@@ -1,5 +1,5 @@
 <div class="col">
-  <h1 i18n>{{messages()["MahJong Practice"]}}</h1>
+  <h1 i18n>{{ messages()["MahJong Practice"] }}</h1>
   <div *ngIf="isDev() === true">
     <h3>Generated Winning Set</h3>
     <div>
@@ -11,7 +11,19 @@
       />
     </div>
   </div>
-  <h3 i18n>{{messages()["Hand tiles"]}}</h3>  
+  <!-- <div class="scoreboard">
+    <p>
+      <span>
+        {{ messages()["Score"] }} : {{ score() }}
+      </span>
+    </p>
+    <p>
+      <span>
+        ⏰ {{ time() }}
+      </span>
+    </p>
+  </div> -->
+  <h3 i18n>{{ messages()["Hand tiles"] }}</h3>
   <div>
     <img
       *ngFor="let tile of tilesRemovedOne()"
@@ -50,7 +62,7 @@
     </div>
   </div>
 
-  <h3 i18n>{{messages()["Please choose winning tile"]}}</h3>
+  <h3 i18n>{{ messages()["Please choose winning tile"] }}</h3>
   <div>
     <div *ngFor="let tiles of suitTiles()">
       <img
@@ -65,7 +77,11 @@
     </div>
   </div>
 
-  <button *ngIf="gameState() === 1" style="margin-top: 20px; font-size: 2rem;" (click)="resetGame()">
-    <span style="size: 5rem;">🔄</span>
+  <button
+    *ngIf="gameState() === 1"
+    style="margin-top: 20px; font-size: 2rem"
+    (click)="startRound()"
+  >
+    <span style="size: 5rem">🔄</span>
   </button>
 </div>

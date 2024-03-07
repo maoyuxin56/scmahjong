@@ -1,4 +1,4 @@
-import { Component, signal, OnInit } from "@angular/core";
+import { Component, signal, OnInit, NgZone } from "@angular/core";
 import { RouterOutlet } from "@angular/router";
 import { Tile, tileSuites } from "./tile";
 import { CommonModule, NgFor } from "@angular/common";
@@ -22,7 +22,9 @@ const WINS = [
   "qing_long_7_dui",
 ];
 const AAA_RATIO = 0.2; // too many AAA melds will make the quiz too easy
-const USE_PREFERRED = 0.9; // 90% of time, use preferred logic to generate melds
+const USE_PREFERRED = 0.7; // 90% of time, use preferred logic to generate melds
+
+const ROUND_TIME = 30;
 
 function getAllTiles(): Tile[] {
   let tilesSet: Tile[] = [];
@@ -123,7 +125,7 @@ function getTripletABC(
 ): Tile[] {
   let _num = getRandomNum(6);
   let _suit = pickRandomFromList(Array.from(allowedSuits));
-  
+
   const rand = Math.random();
   if (rand < USE_PREFERRED) {
     _num = Math.min(7, preferredStart);
@@ -174,24 +176,24 @@ function generatePreferredNum(num_of_interest: number): number {
   const rand = Math.random();
   switch (num_of_interest) {
     case 1:
-      if (rand < 0.5){
-        return 1
+      if (rand < 0.5) {
+        return 1;
       } else {
-        return 2
+        return 2;
       }
     case 9:
       if (rand < 0.5) {
-        return 9
+        return 9;
       } else {
-        return 8
+        return 8;
       }
     default:
       if (rand < 0.33) {
-        return num_of_interest-1
+        return num_of_interest - 1;
       } else if (rand > 0.66) {
-        return num_of_interest
+        return num_of_interest;
       } else {
-        return num_of_interest+1
+        return num_of_interest + 1;
       }
   }
 }
@@ -200,14 +202,14 @@ function generateTilesFromPatterns(
   patterns: string[],
   allowedSuits: Set<number>
 ): Tile[][] {
-
   let _num_of_interet = pickRandomFromList(NUMS);
   let _suit_of_interest = pickRandomFromList(Array.from(allowedSuits));
-  let _toi: Tile = { // tile of interest
+  let _toi: Tile = {
+    // tile of interest
     num: _num_of_interet,
-    suit: _suit_of_interest
-  }
-  _toi.asset = getTileAsset(_toi)
+    suit: _suit_of_interest,
+  };
+  _toi.asset = getTileAsset(_toi);
 
   let _tiles: Tile[][] = [];
   for (const _p of patterns) {
@@ -216,10 +218,14 @@ function generateTilesFromPatterns(
         _tiles.push(getDoublet(allowedSuits));
         break;
       case "AAA":
-        _tiles.push(getTripletAAA(allowedSuits, generatePreferredNum(_toi.num), _toi.suit));
+        _tiles.push(
+          getTripletAAA(allowedSuits, generatePreferredNum(_toi.num), _toi.suit)
+        );
         break;
       case "ABC":
-        _tiles.push(getTripletABC(allowedSuits, generatePreferredNum(_toi.num), _toi.suit));
+        _tiles.push(
+          getTripletABC(allowedSuits, generatePreferredNum(_toi.num), _toi.suit)
+        );
         break;
       default:
         console.error("unknown pattern");
@@ -512,33 +518,55 @@ export class AppComponent {
   protected readonly gameState = signal(0); // 0-playing,1-won
 
   // game depended values
+  protected readonly score = signal(0);
+  protected readonly time = signal(ROUND_TIME);
   protected readonly showInfoModal = signal(true);
   protected readonly suitTiles = signal([BINGTILES, TIAOTILES, WANTILES]);
   protected readonly messages = signal({
     "MahJong Practice": "MahJong Practice",
     "Hand tiles": "Hand tiles",
     "Please choose winning tile": "Please choose winning tile",
+    Score: "Score",
+    Time: "Time",
   });
 
   title = "scmahjong";
 
-  constructor() {
-    this.resetGame();
+  constructor(private _zone: NgZone) {
+    this.startRound();
+    // this.resetGame();
     const lang = navigator.language;
-    console.log(lang);
+    if (this.isDev()) {
+      console.log(lang);
+    }
     if (lang.includes("zh")) {
       // manually doing i18n
       this.messages.set({
         "MahJong Practice": "下叫练习",
         "Hand tiles": "手牌",
         "Please choose winning tile": "选择胡牌",
+        Score: "分数",
+        Time: "时间",
       });
     }
   }
 
+
+  reduceTimeBy(seconds: number, time: any) {
+    console.log(time())
+    time.set(time() - seconds);
+  }
+
   resetGame() {
+    this.score.set(0);
+    this.time.set(ROUND_TIME);
+    this._zone.runOutsideAngular(()=>{
+      let intervalId = setInterval(this.reduceTimeBy, 1000, 1, this.time);
+    })
+  }
+
+  startRound() {
     this.mapPossibleWinnings.set(new Map());
-    console.log('here0')
     while (this.mapPossibleWinnings().size < 2) {
       // re-roll if quiz is too easy
       this.tilesWinningHand.set(getWinHand());
@@ -549,21 +577,19 @@ export class AppComponent {
         findPossibleWinTiles(this.tilesRemovedOne())
       );
     }
-
-    console.log(this.mapPossibleWinnings())
+    if (this.isDev()) {
+      console.log(this.mapPossibleWinnings());
+    }
     this.assetsPossibleWinnings.set(
       Array.from(this.mapPossibleWinnings().keys())
     );
 
-    console.log('here2')
     this.groupedHandPossibleWinnings.set(
       Array.from(this.mapPossibleWinnings().values())
     );
 
-    console.log('here3')
     this.selectedTiles.set(new Set());
 
-    console.log('here4')
     this.gameState.set(0);
   }
 
@@ -585,8 +611,10 @@ export class AppComponent {
     // console.log(t)
     this.selectedTiles.update((v) => {
       if (v.has(t.asset)) {
-        v.delete(t.asset);
+        // user is clicking correct tile again. do nothing.
+        return v;
       } else {
+        this.score.update((s) => s + 1);
         v.add(t.asset);
       }
       return v;
