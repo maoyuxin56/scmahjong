@@ -16,9 +16,19 @@
   align-items: center;
 }
 
+.timebar { 
+  display: block; 
+  top: 0; 
+  left: 0; 
+  height: 20%;
+  background: #B8E4F5;
+  font-size: small;
+  border-radius: 8px;
+}
+
 .scoreboard {
   display: flex;
-  justify-content: center;
+  justify-content: space-between;
   width: 30%;
 }
 

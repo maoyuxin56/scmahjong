@@ -11,18 +11,19 @@
       />
     </div>
   </div>
-  <!-- <div class="scoreboard">
+  <div class="scoreboard">
     <p>
-      <span>
-        {{ messages()["Score"] }} : {{ score() }}
-      </span>
+      <span> {{ messages()["Score"] }} {{ score() }} </span>
     </p>
-    <p>
-      <span>
-        ⏰ {{ time() }}
-      </span>
+    <div style="border-left:0px solid #000; width: 1px;"></div>
+    <div style="border-left:1px solid #000; width: 1px;"></div>
+    <p style="flex: 5;">
+      <span> ⏰</span>
+      <span class="timebar" [ngStyle]="timeBarStyle()"></span>
+      <!-- <span class="timeupdate">+3</span>
+      <span class="timeupdate">-3</span> -->
     </p>
-  </div> -->
+  </div>
   <h3 i18n>{{ messages()["Hand tiles"] }}</h3>
   <div>
     <img
@@ -62,6 +63,14 @@
     </div>
   </div>
 
+  <button
+    *ngIf="gameState() === 1"
+    style="margin-top: 20px; font-size: 2rem"
+    (click)="startRound()"
+  >
+    <span style="size: 5rem">⏭️</span>
+  </button>
+
   <h3 i18n>{{ messages()["Please choose winning tile"] }}</h3>
   <div>
     <div *ngFor="let tiles of suitTiles()">
@@ -77,11 +86,40 @@
     </div>
   </div>
 
-  <button
-    *ngIf="gameState() === 1"
-    style="margin-top: 20px; font-size: 2rem"
-    (click)="startRound()"
-  >
-    <span style="size: 5rem">🔄</span>
-  </button>
+  <dialog *ngIf="showInfoModal()" id="info-modal">
+    <div
+      style="
+        margin-top: 30px;
+        margin-bottom: 30px;
+        font-size: 1.5rem;
+        text-align: center;
+      "
+    >
+      <p>
+        {{ messages()["info1"] }}
+      </p>
+      <p>
+        {{ messages()["info2"] }}
+      </p>
+    </div>
+    <button style="font-size: 2rem" (click)="onClickStart()">▶️</button>
+  </dialog>
+  <dialog *ngIf="showResultModal()" id="info-modal">
+    <div
+      style="
+        margin-top: 30px;
+        margin-bottom: 30px;
+        font-size: 1.5rem;
+        text-align: center;
+      "
+    >
+      <p>
+        {{ messages()["info1"] }}
+      </p>
+      <p>
+        {{ messages()["info2"] }}
+      </p>
+    </div>
+    <button style="font-size: 2rem" (click)="onClickRestart()">▶️</button>
+  </dialog>
 </div>

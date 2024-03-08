@@ -521,6 +521,7 @@ export class AppComponent {
   protected readonly score = signal(0);
   protected readonly time = signal(ROUND_TIME);
   protected readonly showInfoModal = signal(true);
+  protected readonly showResultModal = signal(false);
   protected readonly suitTiles = signal([BINGTILES, TIAOTILES, WANTILES]);
   protected readonly messages = signal({
     "MahJong Practice": "MahJong Practice",
@@ -528,13 +529,14 @@ export class AppComponent {
     "Please choose winning tile": "Please choose winning tile",
     Score: "Score",
     Time: "Time",
+    info1:
+      "Identifying the winning tile quickly and accurately is a crucial skill for a aspiring MahJong player.",
+    info2: "Click ▶️ to practice and have fun.",
   });
 
   title = "scmahjong";
 
   constructor(private _zone: NgZone) {
-    this.startRound();
-    // this.resetGame();
     const lang = navigator.language;
     if (this.isDev()) {
       console.log(lang);
@@ -547,22 +549,51 @@ export class AppComponent {
         "Please choose winning tile": "选择胡牌",
         Score: "分数",
         Time: "时间",
+        info1: "吃火锅要会兑调料，打麻将要会下叫.",
+        info2: "点击▶️开始训练。",
       });
     }
   }
 
-
-  reduceTimeBy(seconds: number, time: any) {
-    console.log(time())
-    time.set(time() - seconds);
+  timeBarStyle() {
+    let _s: { [k: string]: any } = {
+      width: (this.time() / 30) * 100 + "%",
+    };
+    if (this.time() < 10) {
+      _s["background"] = "red";
+    }
+    return _s;
   }
+
+  reduceTimeBy(seconds: number, time: any, showResultModal?: any) {
+    console.log(time());
+    if (time() > 0) {
+      time.set(time() - seconds);
+    } else {
+      showResultModal.set(true);
+    }
+  }
+
+  onClickStart() {
+    this.resetGame();
+    this.startRound();
+    this.showInfoModal.set(false);
+  }
+  onClickRestart() {
+    this.resetGame();
+    this.startRound();
+    this.showResultModal.set(false);
+  }
+
+  intervalId: NodeJS.Timeout | undefined;
 
   resetGame() {
     this.score.set(0);
     this.time.set(ROUND_TIME);
-    this._zone.runOutsideAngular(()=>{
-      let intervalId = setInterval(this.reduceTimeBy, 1000, 1, this.time);
-    })
+    if (this.intervalId !== undefined) {
+      clearInterval(this.intervalId);
+    }
+    this.intervalId = setInterval(this.reduceTimeBy, 1000, 1, this.time, this.showResultModal);
   }
 
   startRound() {
@@ -599,6 +630,7 @@ export class AppComponent {
     }
     let ele: HTMLElement = e.target;
     if (!this.assetsPossibleWinnings().includes(t.asset!)) {
+      // animation
       if (!ele.className.includes("shake")) {
         const old = ele.className;
         ele.className = ele.className + " shake";
@@ -606,6 +638,9 @@ export class AppComponent {
           ele.className = old;
         }, 300);
       }
+
+      // timer
+      this.reduceTimeBy(3, this.time, this.showResultModal);
       return;
     }
     // console.log(t)
@@ -616,6 +651,9 @@ export class AppComponent {
       } else {
         this.score.update((s) => s + 1);
         v.add(t.asset);
+        // timer
+        this.reduceTimeBy(-3, this.time, this.showResultModal);
+
       }
       return v;
     });
