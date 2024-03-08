@@ -31,7 +31,7 @@ const WINS = [
 const AAA_RATIO = 0.2; // too many AAA melds will make the quiz too easy
 const USE_PREFERRED = 0.7; // 90% of time, use preferred logic to generate melds
 
-const ROUND_TIME = 20;
+const ROUND_TIME = 50;
 
 function getAllTiles(): Tile[] {
   let tilesSet: Tile[] = [];
@@ -541,7 +541,7 @@ export class AppComponent {
     Score: "Score",
     Time: "Time",
     info1:
-      "Identifying the winning tile quickly and accurately is a crucial skill for a aspiring MahJong player.",
+      "Identifying the winning tile quickly and accurately is a crucial skill for a good mahJong player.",
     info2: "Click ▶️ to practice and have fun.",
     "Completed Rounds": "Completed Rounds"
   });
@@ -565,7 +565,7 @@ export class AppComponent {
         "Please choose winning tile": "选择胡牌",
         Score: "分数",
         Time: "时间",
-        info1: "吃火锅要兑调料，打麻将要会下叫.",
+        info1: "吃火锅要兑调料，打麻将要会下叫。",
         info2: "点击▶️开始训练。",
         "Completed Rounds": "完成关卡"
       });
