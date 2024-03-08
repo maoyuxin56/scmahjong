@@ -1,4 +1,11 @@
-import { Component, signal, OnInit, NgZone } from "@angular/core";
+import {
+  Component,
+  signal,
+  OnInit,
+  NgZone,
+  ViewChild,
+  ElementRef,
+} from "@angular/core";
 import { RouterOutlet } from "@angular/router";
 import { Tile, tileSuites } from "./tile";
 import { CommonModule, NgFor } from "@angular/common";
@@ -24,7 +31,7 @@ const WINS = [
 const AAA_RATIO = 0.2; // too many AAA melds will make the quiz too easy
 const USE_PREFERRED = 0.7; // 90% of time, use preferred logic to generate melds
 
-const ROUND_TIME = 30;
+const ROUND_TIME = 20;
 
 function getAllTiles(): Tile[] {
   let tilesSet: Tile[] = [];
@@ -499,6 +506,9 @@ function removeRandomTile(tiles: Tile[]): Tile[] {
 export class AppComponent {
   protected readonly isDev = signal(false);
 
+  // views
+  @ViewChild("timebar") timebar: ElementRef;
+
   // round depended values
   protected readonly tilesWinningHand = signal(getWinHand());
   protected readonly tilesRemovedOne = signal(
@@ -515,10 +525,11 @@ export class AppComponent {
     Array.from(this.mapPossibleWinnings().values())
   );
   protected readonly selectedTiles = signal(new Set());
-  protected readonly gameState = signal(0); // 0-playing,1-won
+  protected readonly gameState = signal(0); // 0-playing,1-foundAll,2-gameover
 
   // game depended values
   protected readonly score = signal(0);
+  protected readonly rounds = signal(0);
   protected readonly time = signal(ROUND_TIME);
   protected readonly showInfoModal = signal(true);
   protected readonly showResultModal = signal(false);
@@ -532,11 +543,16 @@ export class AppComponent {
     info1:
       "Identifying the winning tile quickly and accurately is a crucial skill for a aspiring MahJong player.",
     info2: "Click ▶️ to practice and have fun.",
+    "Completed Rounds": "Completed Rounds"
   });
 
   title = "scmahjong";
 
-  constructor(private _zone: NgZone) {
+  ngOnInit() {
+    console.log(this.timebar);
+  }
+
+  constructor() {
     const lang = navigator.language;
     if (this.isDev()) {
       console.log(lang);
@@ -549,15 +565,16 @@ export class AppComponent {
         "Please choose winning tile": "选择胡牌",
         Score: "分数",
         Time: "时间",
-        info1: "吃火锅要会兑调料，打麻将要会下叫.",
+        info1: "吃火锅要兑调料，打麻将要会下叫.",
         info2: "点击▶️开始训练。",
+        "Completed Rounds": "完成关卡"
       });
     }
   }
 
   timeBarStyle() {
     let _s: { [k: string]: any } = {
-      width: (this.time() / 30) * 100 + "%",
+      width: (this.time() / ROUND_TIME) * 100 + "%",
     };
     if (this.time() < 10) {
       _s["background"] = "red";
@@ -565,12 +582,18 @@ export class AppComponent {
     return _s;
   }
 
-  reduceTimeBy(seconds: number, time: any, showResultModal?: any) {
-    console.log(time());
-    if (time() > 0) {
-      time.set(time() - seconds);
+  reduceTimeBy(seconds: number) {
+    console.log(this.time());
+    console.log(this.gameState());
+    if (this.gameState() !== 0) {
+      return;
+    }
+    if (this.time() > 0) {
+      this.time.set(Math.max(this.time() - seconds, 30));
     } else {
-      showResultModal.set(true);
+      // game over, show answers and restart button
+      // this.showResultModal.set(true);
+      this.gameState.set(2);
     }
   }
 
@@ -579,10 +602,10 @@ export class AppComponent {
     this.startRound();
     this.showInfoModal.set(false);
   }
+
   onClickRestart() {
     this.resetGame();
     this.startRound();
-    this.showResultModal.set(false);
   }
 
   intervalId: NodeJS.Timeout | undefined;
@@ -593,10 +616,15 @@ export class AppComponent {
     if (this.intervalId !== undefined) {
       clearInterval(this.intervalId);
     }
-    this.intervalId = setInterval(this.reduceTimeBy, 1000, 1, this.time, this.showResultModal);
+    // this.intervalId = setInterval(this.reduceTimeBy, 1000, 1, this.time, this.showResultModal);
+    this.intervalId = setInterval(() => {
+      this.reduceTimeBy(1);
+    }, 1000);
   }
 
   startRound() {
+    this.rounds.update((r) => r + 1);
+    this.time.set(ROUND_TIME);
     this.mapPossibleWinnings.set(new Map());
     while (this.mapPossibleWinnings().size < 2) {
       // re-roll if quiz is too easy
@@ -632,15 +660,18 @@ export class AppComponent {
     if (!this.assetsPossibleWinnings().includes(t.asset!)) {
       // animation
       if (!ele.className.includes("shake")) {
-        const old = ele.className;
+        this.timebar.nativeElement.className =
+          this.timebar.nativeElement.className + " shake";
         ele.className = ele.className + " shake";
         setTimeout(() => {
-          ele.className = old;
+          ele.className = ele.className.replace(" shake", "");
+          this.timebar.nativeElement.className =
+            this.timebar.nativeElement.className.replace(" shake", "");
         }, 300);
       }
 
       // timer
-      this.reduceTimeBy(3, this.time, this.showResultModal);
+      this.reduceTimeBy(3);
       return;
     }
     // console.log(t)
@@ -652,8 +683,7 @@ export class AppComponent {
         this.score.update((s) => s + 1);
         v.add(t.asset);
         // timer
-        this.reduceTimeBy(-3, this.time, this.showResultModal);
-
+        this.reduceTimeBy(-5);
       }
       return v;
     });

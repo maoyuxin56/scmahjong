@@ -12,14 +12,13 @@
     </div>
   </div>
   <div class="scoreboard">
-    <p>
+    <p style="white-space: nowrap">
       <span> {{ messages()["Score"] }} {{ score() }} </span>
     </p>
-    <div style="border-left:0px solid #000; width: 1px;"></div>
-    <div style="border-left:1px solid #000; width: 1px;"></div>
-    <p style="flex: 5;">
+    <div style="border-left: 1px solid #000; width: 1px"></div>
+    <p style="width: 100%">
       <span> ⏰</span>
-      <span class="timebar" [ngStyle]="timeBarStyle()"></span>
+      <span #timebar class="timebar" [ngStyle]="timeBarStyle()"></span>
       <!-- <span class="timeupdate">+3</span>
       <span class="timeupdate">-3</span> -->
     </p>
@@ -45,7 +44,7 @@
     </div>
   </div>
 
-  <div *ngIf="gameState() === 1 || isDev() === true">
+  <div *ngIf="gameState() !== 0 || isDev() === true">
     <div *ngFor="let key of mapPossibleWinnings().keys()">
       <img class="tile answers selected" [src]="key" [attr.alt]="key" />
       <span class="arrowemoji"> ➡️ </span>
@@ -69,6 +68,25 @@
     (click)="startRound()"
   >
     <span style="size: 5rem">⏭️</span>
+  </button>
+  <div *ngIf="gameState() === 2">
+    <p>
+      <span>
+        {{ messages()["Completed Rounds"] }}
+        {{ rounds() - 1 }}
+      </span>
+      <span>
+        {{ messages()["Score"] }}
+        {{ score() }}
+      </span>
+    </p>
+  </div>
+  <button
+    *ngIf="gameState() === 2"
+    style="margin-top: 20px; font-size: 2rem"
+    (click)="onClickRestart()"
+  >
+    <span style="size: 5rem">🔄</span>
   </button>
 
   <h3 i18n>{{ messages()["Please choose winning tile"] }}</h3>
@@ -114,10 +132,10 @@
       "
     >
       <p>
-        {{ messages()["info1"] }}
+        {{ messages()["Score"] }}
       </p>
       <p>
-        {{ messages()["info2"] }}
+        {{ score() }}
       </p>
     </div>
     <button style="font-size: 2rem" (click)="onClickRestart()">▶️</button>

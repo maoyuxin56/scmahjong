@@ -28,39 +28,18 @@
 
 .scoreboard {
   display: flex;
-  justify-content: space-between;
-  width: 30%;
+  display: -webkit-box;
+  display: -moz-box;
+  display: -ms-flexbox;
+  display: -moz-flex;
+  display: -webkit-flex;
+  width: 50%;
 }
 
 .scoreboard > * {
-  font-size: 2rem;
-  flex: 1;
+  font-size: 1rem;
   margin: 5px;
   text-align: center;
-}
-
-@media screen and (max-width: 650px) {
-  .wrapper {
-    flex-direction: column-reverse;
-    align-items: center;
-  }
-
-  .overall-stats {
-    align-items: center;
-    margin-bottom: 16px;
-  }
-
-  #result {
-    box-sizing: border-box;
-    min-width: auto;
-    height: 100%;
-    width: 100%;
-    padding: 20px;
-    top: 0;
-    left: 0;
-    border-radius: 0;
-    transform: none;
-  }
 }
 
 .arrowemoji {
@@ -92,7 +71,7 @@ img.selected {
   opacity: 1 !important;
 }
 
-img.shake {
+.shake {
   /* Start the shake animation and make the animation last for 0.5 seconds */
   animation: shake 0.3s;
   /* When the animation is finished, start again */
@@ -139,6 +118,11 @@ img.shake {
   .wrapper {
     flex-direction: column-reverse;
     align-items: center;
+    display: flex;
+  }
+
+  .timebar {
+    width: 100%;
   }
 
   .overall-stats {
@@ -152,7 +136,7 @@ img.shake {
     height: 90%;
     width: 90%;
     padding: 20px;
-    top: 0;
+    top: 20px;
     left: 0;
     border-radius: 0;
     transform: none;
