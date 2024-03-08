@@ -583,13 +583,11 @@ export class AppComponent {
   }
 
   reduceTimeBy(seconds: number) {
-    console.log(this.time());
-    console.log(this.gameState());
     if (this.gameState() !== 0) {
       return;
     }
     if (this.time() > 0) {
-      this.time.set(Math.max(this.time() - seconds, 30));
+      this.time.set(Math.min(this.time() - seconds, ROUND_TIME));
     } else {
       // game over, show answers and restart button
       // this.showResultModal.set(true);
